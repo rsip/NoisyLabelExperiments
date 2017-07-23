@@ -119,7 +119,7 @@ def get_model(num_classes):
     pool5_7_7 = avg_pool_2d(inception_5b_output, kernel_size=7, strides=1)
     pool5_7_7 = dropout(pool5_7_7, 0.4)
     #loss = fully_connected(pool5_7_7, 17,activation='softmax')
-    loss = fully_connected(pool5_7_7, num_classes,activation='softmax')
+    loss = fully_connected(pool5_7_7, num_classes, activation='softmax')
     network = regression(loss, optimizer='momentum',
                         loss='categorical_crossentropy',
                         learning_rate=0.001)

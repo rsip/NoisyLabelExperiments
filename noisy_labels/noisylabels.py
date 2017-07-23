@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+tf.reset_default_graph()
 
 import tflearn
 from tflearn.data_preprocessing import ImagePreprocessing
@@ -12,7 +13,7 @@ from tflearn.layers.estimator import regression
 import random
 import argparse
 
-import noisy_labels.models.inception as inception
+import models.inception as inception
 
 def unpickle(file):
     import cPickle
@@ -30,7 +31,7 @@ def get_images(raw):
     return images
 
 def load_mnist():
-    path = 'data/mnist'
+    path = '../data/mnist'
     from tensorflow.examples.tutorials.mnist import mnist
     data = mnist.read_data_sets(path, one_hot=True)
     X = mnist.train.images
@@ -40,7 +41,7 @@ def load_mnist():
     return X, Y, X_test, Y_test
 
 def load_cifar10():
-    path = 'data/cifar-10-batches-py'
+    path = '../data/cifar-10-batches-py'
     data = [unpickle(path + '/data_batch_' + str(i)) for i in range(1, 5)]
     X = np.concatenate([get_images(batch['data']) for batch in data])
     Y = np.concatenate([onehot_labels(batch['labels'], 10) for batch in data])
@@ -49,7 +50,7 @@ def load_cifar10():
     return X, Y, X_test, Y_test
 
 def load_cifar100():
-    path = 'data/cifar-100-python'
+    path = '../data/cifar-100-python'
     X = get_images(unpickle(path + '/train')['data'])
     Y = onehot_labels(unpickle(path + '/train')['fine_labels'], 100)
     X_test = get_images(unpickle(path + '/test')['data'])
