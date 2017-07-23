@@ -18,8 +18,6 @@ from tflearn.layers.merge_ops import merge
 import random
 import argparse
 
-import models.inception as inception
-
 def unpickle(file):
     import cPickle
     with open(file, 'rb') as fo:
@@ -210,7 +208,7 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
 
         pool5_7_7 = avg_pool_2d(inception_5b_output, kernel_size=7, strides=1)
         pool5_7_7 = dropout(pool5_7_7, 0.4)
-        #loss = fully_connected(pool5_7_7, 17,activation='softmax')
+
         loss = fully_connected(pool5_7_7, 10, activation='softmax')
         net = regression(loss, optimizer='momentum',
                             loss='categorical_crossentropy',
@@ -221,7 +219,7 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
 
     # Train network
     model = tflearn.DNN(net, tensorboard_verbose=0)
-    model.fit(X, Y, n_epoch=50, shuffle=True, validation_set=(X_test, Y_test), show_metric=True, batch_size=100, run_id='noisylabel')
+    model.fit(X, Y, n_epoch=1000, shuffle=True, validation_set=(X_test, Y_test), show_metric=True, batch_size=100, run_id='noisylabel')
 
     # Output test accuracy
     accuracy = model.evaluate(X_test, Y_test)
