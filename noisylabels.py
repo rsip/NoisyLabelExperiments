@@ -27,6 +27,16 @@ def get_images(raw):
     images = images.transpose([0, 2, 3, 1])
     return images
 
+def load_mnist():
+    path = 'data/mnist'
+    from tensorflow.examples.tutorials.mnist import mnist
+    data = mnist.read_data_sets(path, one_hot=True)
+    X = mnist.train.images
+    Y = mnist.train.labels
+    X_test = mnist.test.images
+    Y_test = mnist.test.labels
+    return X, Y, X_test, Y_test
+
 def load_cifar10():
     path = 'data/cifar-10-batches-py'
     data = [unpickle(path + '/data_batch_' + str(i)) for i in range(1, 5)]
@@ -56,7 +66,7 @@ def corrupt_train_labels(Y, p, num_classes):
             #print("Original: " + str(originalTrainingLabel) + ", New: " + str(newTrainingLabel))
     return Y
 
-def run_network(X, Y, X_test, Y_test, p, model_type):
+def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
     # Image preprocessing and augmentation
     img_prep = ImagePreprocessing()
     img_prep.add_featurewise_zero_center()
@@ -72,12 +82,17 @@ def run_network(X, Y, X_test, Y_test, p, model_type):
         net = max_pool_2d(net, 2, strides=None, padding='same')
         net = conv_2d(net, 25, 5, strides=1, padding='same', activation='relu', bias=True, bias_init='zeros', weights_init='uniform_scaling')
         net = max_pool_2d(net, 2, strides=None, padding='same')
-        net = fully_connected(net, 32, activation='relu')
-        net = fully_connected(net, 10, activation='softmax')
+        if dataset == 'cifar10':
+            net = fully_connected(net, 32, activation='relu')
+            net = fully_connected(net, 10, activation='softmax')
+        elif dataset == 'cifar100':
+            net = fully_connected(net, 256, activation='relu')
+            net = fully_connected(net, 100, activation='softmax')
         net = regression(net, optimizer='adam', loss='categorical_crossentropy', learning_rate=0.001)
     
     elif model_type == 'inception_v3':
-        return
+        net = input_data(shape=[None, 32, 32, 3])
+
     else:
         return
 
@@ -108,7 +123,7 @@ def main():
         return
 
     # Run with noise injection probability p
-    run_network(X, Y_noisy, X_test, Y_test, p, model)
+    run_network(X, Y_noisy, X_test, Y_test, p, model, dataset)
 
 if __name__ == "__main__":
     main()
