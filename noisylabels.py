@@ -96,9 +96,13 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
     else:
         return
 
-    # Train and test network
+    # Train network
     model = tflearn.DNN(net, tensorboard_verbose=0)
     model.fit(X, Y, n_epoch=50, shuffle=True, validation_set=(X_test, Y_test), show_metric=True, batch_size=100, run_id='cifar10')
+
+    # Output test accuracy
+    accuracy = model.evaluate(X_test, Y_test)
+    print("Test accuracy: " + str(accuracy))
 
 def main():
     # Parse arguments
