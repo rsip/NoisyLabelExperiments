@@ -40,11 +40,11 @@ def corrupt_train_labels(Y, p):
     for i in range(len(Y)):
         if (random.random() < p):
             originalTrainingLabel = np.argmax(Y[i])
-            validOtherChoices = list(range(0, originalTrainingLabel)) + list(range(originalTrainingLabel + 1, 10))
+            validOtherChoices = list(range(0, originalTrainingLabel)) + list(range(originalTrainingLabel + 1, 100))
             newTrainingLabel = random.choice(validOtherChoices)
-            Y[i] = np.zeros(10)
+            Y[i] = np.zeros(100)
             Y[i][newTrainingLabel] = 1
-            print("Original: " + str(originalTrainingLabel) + ", New: " + str(newTrainingLabel))
+            # print("Original: " + str(originalTrainingLabel) + ", New: " + str(newTrainingLabel))
     return Y
 
 def run_network(X, Y, X_test, Y_test, log_file, p):
@@ -62,13 +62,13 @@ def run_network(X, Y, X_test, Y_test, log_file, p):
     net = max_pool_2d(net, 2, strides=None, padding='same')
     net = conv_2d(net, 25, 5, strides=1, padding='same', activation='relu', bias=True, bias_init='zeros', weights_init='uniform_scaling')
     net = max_pool_2d(net, 2, strides=None, padding='same')
-    net = fully_connected(net, 32, activation='relu')
-    net = fully_connected(net, 10, activation='softmax')
+    net = fully_connected(net, 256, activation='relu')
+    net = fully_connected(net, 100, activation='softmax')
     net = regression(net, optimizer='adam', loss='categorical_crossentropy', learning_rate=0.001)
 
     # Train and test network
     model = tflearn.DNN(net, tensorboard_verbose=0)
-    model.fit(X, Y, n_epoch=50, shuffle=True, validation_set=(X_test, Y_test), show_metric=True, batch_size=100, run_id='cifar10_2layer')
+    model.fit(X, Y, n_epoch=50, shuffle=True, validation_set=(X_test, Y_test), show_metric=True, batch_size=100, run_id='cifar100_2layer')
 
     # Write test accuracy to file
     accuracy = model.evaluate(X_test, Y_test)
@@ -83,7 +83,7 @@ def main():
     print("Training with probability of label corruption " + str(p))
 
     # Load data
-    path = 'data/cifar-10-batches-py'
+    path = 'data/cifar-100-python'
     X, Y, X_test, Y_test = load_data(path)
 
     # Run with noise injection probability p
