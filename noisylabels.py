@@ -179,7 +179,7 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
 
         # Train network
         model = tflearn.DNN(net, tensorboard_verbose=0)
-        model.fit(X, Y, n_epoch=250, shuffle=True, validation_set=(X_test, Y_test), show_metric=True, batch_size=100, run_id='noisylabel')
+        model.fit(X, Y, n_epoch=1000, shuffle=True, validation_set=(X_test, Y_test), show_metric=True, batch_size=100, run_id='noisylabel')
 
     else:
         return

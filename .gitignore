@@ -1,3 +1,4 @@
 data/
 tmp/
 trainlog.txt
+*.pyc
