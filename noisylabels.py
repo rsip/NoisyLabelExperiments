@@ -246,6 +246,9 @@ def main():
     elif dataset == 'cifar100':
         X, Y, X_test, Y_test = dataLoader.load_cifar100()
         Y_noisy = rand_corrupt(Y, p, 100)
+    elif dataset == 'mnist':
+        X, Y, X_test, Y_test = dataLoader.load_mnist()
+        Y_noisy = rand_corrupt(Y, p, 10)
     else:
         return
 
