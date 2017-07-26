@@ -6,21 +6,19 @@ import tflearn
 from tflearn.data_preprocessing import ImagePreprocessing
 from tflearn.data_augmentation import ImageAugmentation
 from tflearn.data_utils import shuffle, to_categorical
-from tflearn.layers.core import input_data, fully_connected
-from tflearn.layers.conv import conv_2d, max_pool_2d
-from tflearn.layers.estimator import regression
-
-from tflearn.layers.core import dropout
-from tflearn.layers.conv import avg_pool_2d
+from tflearn.layers.core import input_data, fully_connected, dropout
+from tflearn.layers.conv import conv_2d, max_pool_2d, avg_pool_2d
 from tflearn.layers.normalization import local_response_normalization
 from tflearn.layers.merge_ops import merge
+from tflearn.layers.estimator import regression
 
 import random
 import argparse
+from sklearn.metrics import confusion_matrix
 
 from dataloader import DataLoader
     
-def corrupt_train_labels(Y, p, num_classes): 
+def rand_corrupt(Y, p, num_classes): 
     # Corrupt labels with probability p
     for i in range(len(Y)):
         if (random.random() < p):
@@ -31,6 +29,14 @@ def corrupt_train_labels(Y, p, num_classes):
             Y[i][newTrainingLabel] = 1
             #print("Original: " + str(originalTrainingLabel) + ", New: " + str(newTrainingLabel))
     return Y
+
+#def least_confusing(Y, p, dataset):
+    # Corrupt labels with probability p to 3 least confusable classes
+
+
+#def most_confusing(Y, p, dataset):
+    # Corrupt labels with probability p to 3 most confusable classes
+
 
 def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
     # Image preprocessing and augmentation
@@ -188,6 +194,34 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
     accuracy = model.evaluate(X_test, Y_test)
     print("Test accuracy: " + str(accuracy))
 
+    # Compute confusion matrix
+    Y_pred = []
+    for x in X_test:
+        y = model.predict(x)
+        Y_pred.append(y)
+    labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    cm = confusion_matrix(Y_test, Y_pred)
+    print_confusion_matrix(cm, labels)
+
+def print_confusion_matrix(confusion_matrix, labels):
+    column_width = max([len(x) for x in labels] + [5])
+    empty_cell = " " * column_width
+
+    # Print header
+    print "   " + empty_cell,
+    for label in labels:
+        print "%{0}s".format(column_width) % label,
+    print
+
+    # Print rows
+    for i, label in enumerate(labels):
+        print "  %{0}s".format(column_width) % label,
+        for j in range(len(labels)):
+            cell = "%{0}.1f".format(column_width) % cm[i, j]
+            print cell,
+        print
+
+
 def main():
     # Add arguments to parser
     parser = argparse.ArgumentParser()
@@ -208,10 +242,10 @@ def main():
     dataLoader = DataLoader()
     if dataset == 'cifar10':
         X, Y, X_test, Y_test = dataLoader.load_cifar10()
-        Y_noisy = corrupt_train_labels(Y, p, 10)
+        Y_noisy = rand_corrupt(Y, p, 10)
     elif dataset == 'cifar100':
         X, Y, X_test, Y_test = dataLoader.load_cifar100()
-        Y_noisy = corrupt_train_labels(Y, p, 100)
+        Y_noisy = rand_corrupt(Y, p, 100)
     else:
         return
 
