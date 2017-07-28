@@ -15,6 +15,7 @@ from tflearn.layers.estimator import regression
 import random
 import argparse
 from sklearn.metrics import confusion_matrix
+import pickle, pprint
 
 from dataloader import DataLoader
     
@@ -32,7 +33,6 @@ def rand_corrupt(Y, p, num_classes):
 
 #def least_confusing(Y, p, dataset):
     # Corrupt labels with probability p to 3 least confusable classes
-
 
 #def most_confusing(Y, p, dataset):
     # Corrupt labels with probability p to 3 most confusable classes
@@ -195,15 +195,29 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
     print("Test accuracy: " + str(accuracy))
 
     # Compute confusion matrix
+    Y_test = np.argmax(Y_test, axis=1)
     Y_pred = []
     for x in X_test:
-        y = model.predict(x)
-        Y_pred.append(y)
-    labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+        y = model.predict([x])
+        Y_pred.append(np.argmax(y[0]))
     cm = confusion_matrix(Y_test, Y_pred)
+    if dataset == 'mnist' or dataset == 'cifar10':
+        labels = [str(i) for i in range(10)]
+    if dataset == 'cifar100':
+        labels = [str(i) for i in range(100)]
     print_confusion_matrix(cm, labels)
 
-def print_confusion_matrix(confusion_matrix, labels):
+    # Write confusion matrix to file
+    cm_file = open('cm.pkl', 'wb')
+    pickle.dump(cm, cm_file)
+    cm_file.close()
+
+    cm_file = open('cm.pkl', 'rb')
+    cm_test = pickle.load(cm_file)
+    pprint.pprint(cm_test)
+    cm_file.close()
+
+def print_confusion_matrix(cm, labels):
     column_width = max([len(x) for x in labels] + [5])
     empty_cell = " " * column_width
 
@@ -220,7 +234,6 @@ def print_confusion_matrix(confusion_matrix, labels):
             cell = "%{0}.1f".format(column_width) % cm[i, j]
             print cell,
         print
-
 
 def main():
     # Add arguments to parser
@@ -240,7 +253,10 @@ def main():
 
     # Load data
     dataLoader = DataLoader()
-    if dataset == 'cifar10':
+    if dataset == 'mnist':
+        X, Y, X_test, Y_test = dataLoader.load_mnist()
+        Y_noisy = rand_corrupt(Y, p, 10)
+    elif dataset == 'cifar10':
         X, Y, X_test, Y_test = dataLoader.load_cifar10()
         Y_noisy = rand_corrupt(Y, p, 10)
     elif dataset == 'cifar100':

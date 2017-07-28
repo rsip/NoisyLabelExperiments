@@ -18,8 +18,8 @@ class DataLoader():
 
     def load_mnist(self):
         path = 'data/mnist'
-        from tensorflow.examples.tutorials.mnist import mnist
-        data = mnist.read_data_sets(path, one_hot=True)
+        from tensorflow.examples.tutorials.mnist import input_data
+        mnist = input_data.read_data_sets(path, one_hot=True)
         X = mnist.train.images
         Y = mnist.train.labels
         X_test = mnist.test.images
