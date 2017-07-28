@@ -31,12 +31,65 @@ def rand_corrupt(Y, p, num_classes):
             #print("Original: " + str(originalTrainingLabel) + ", New: " + str(newTrainingLabel))
     return Y
 
-#def least_confusing(Y, p, dataset):
+def least_confusing(Y, p, dataset, num_classes):
     # Corrupt labels with probability p to 3 least confusable classes
+    if dataset == 'cifar10':
+        cm_file = open('confusion_matrices/cifar10_cm.pkl', 'rb')
+    elif dataset == 'cifar100':
+        cm_file = open('confusion_matrices/cifar100_cm.pkl', 'rb')
+    else:
+        return
+    cm = pickle.load(cm_file)
+    pprint.pprint(cm)
+    cm_file.close()
 
-#def most_confusing(Y, p, dataset):
-    # Corrupt labels with probability p to 3 most confusable classes
+    # Get 3 least confusable CM
+    least_confusing = []
+    for row in cm:
+        least = np.argsort(row)[:3]
+        print(least)
+        least_confusing.append(least)
 
+    # Inject noise
+    for i in range(len(Y)):
+        if (random.random() < p):
+            originalTrainingLabel = np.argmax(Y[i])
+            validOtherChoices = least_confusing[originalTrainingLabel]
+            newTrainingLabel = random.choice(validOtherChoices)
+            Y[i] = np.zeros(num_classes)
+            Y[i][newTrainingLabel] = 1
+            print("Original: " + str(originalTrainingLabel) + ", New: " + str(newTrainingLabel))
+    return Y
+
+def most_confusing(Y, p, dataset, num_classes):
+    # Corrupt labels with probability p to 3 least confusable classes
+    if dataset == 'cifar10':
+        cm_file = open('confusion_matrices/cifar10_cm.pkl', 'rb')
+    elif dataset == 'cifar100':
+        cm_file = open('confusion_matrices/cifar100_cm.pkl', 'rb')
+    else:
+        return
+    cm = pickle.load(cm_file)
+    pprint.pprint(cm)
+    cm_file.close()
+
+    # Get 3 least confusable CM
+    most_confusing = []
+    for row in cm:
+        most = np.argsort(-row)[:3]
+        print(most)
+        most_confusing.append(most)
+
+    # Inject noise
+    for i in range(len(Y)):
+        if (random.random() < p):
+            originalTrainingLabel = np.argmax(Y[i])
+            validOtherChoices = most_confusing[originalTrainingLabel]
+            newTrainingLabel = random.choice(validOtherChoices)
+            Y[i] = np.zeros(num_classes)
+            Y[i][newTrainingLabel] = 1
+            print("Original: " + str(originalTrainingLabel) + ", New: " + str(newTrainingLabel))
+    return Y
 
 def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
     # Image preprocessing and augmentation
@@ -195,58 +248,53 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
     print("Test accuracy: " + str(accuracy))
 
     # Compute confusion matrix
-    Y_test = np.argmax(Y_test, axis=1)
-    Y_pred = []
-    for x in X_test:
-        y = model.predict([x])
-        Y_pred.append(np.argmax(y[0]))
-    cm = confusion_matrix(Y_test, Y_pred)
-    if dataset == 'mnist' or dataset == 'cifar10':
-        labels = [str(i) for i in range(10)]
-    if dataset == 'cifar100':
-        labels = [str(i) for i in range(100)]
-    print_confusion_matrix(cm, labels)
+    # Y_test = np.argmax(Y_test, axis=1)
+    # Y_pred = []
+    # for x in X_test:
+    #     y = model.predict([x])
+    #     Y_pred.append(np.argmax(y[0]))
+    # cm = confusion_matrix(Y_test, Y_pred)
+    # if dataset == 'mnist' or dataset == 'cifar10':
+    #     labels = [str(i) for i in range(10)]
+    # if dataset == 'cifar100':
+    #     labels = [str(i) for i in range(100)]
+    # print_confusion_matrix(cm, labels)
+    # cm_file = open('cm.pkl', 'wb')
+    # pickle.dump(cm, cm_file)
+    # cm_file.close()
 
-    # Write confusion matrix to file
-    cm_file = open('cm.pkl', 'wb')
-    pickle.dump(cm, cm_file)
-    cm_file.close()
-
-    cm_file = open('cm.pkl', 'rb')
-    cm_test = pickle.load(cm_file)
-    pprint.pprint(cm_test)
-    cm_file.close()
-
-def print_confusion_matrix(cm, labels):
-    column_width = max([len(x) for x in labels] + [5])
-    empty_cell = " " * column_width
-
-    # Print header
-    print "   " + empty_cell,
-    for label in labels:
-        print "%{0}s".format(column_width) % label,
-    print
-
-    # Print rows
-    for i, label in enumerate(labels):
-        print "  %{0}s".format(column_width) % label,
-        for j in range(len(labels)):
-            cell = "%{0}.1f".format(column_width) % cm[i, j]
-            print cell,
-        print
+# def print_confusion_matrix(cm, labels):
+#     column_width = max([len(x) for x in labels] + [5])
+#     empty_cell = " " * column_width
+#
+#     # Print header
+#     print "   " + empty_cell,
+#     for label in labels:
+#         print "%{0}s".format(column_width) % label,
+#     print
+#
+#     # Print rows
+#     for i, label in enumerate(labels):
+#         print "  %{0}s".format(column_width) % label,
+#         for j in range(len(labels)):
+#             cell = "%{0}.1f".format(column_width) % cm[i, j]
+#             print cell,
+#         print
 
 def main():
     # Add arguments to parser
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--probability', type=float, required=True, help="Probability of noisy label injection")
-    parser.add_argument('-m', '--model', type=str, required=True,  help="Model architecture")
+    parser.add_argument('-m', '--model', type=str, required=True, help="Model architecture")
     parser.add_argument('-d', '--dataset', type=str, required=True, help="Dataset to load")
+    parser.add_argument('-e', '--experiment', type=str, required=True, help="Noisy label experiment to run")
 
     # Parse arguments
     args = parser.parse_args()
     p = args.probability
     dataset = args.dataset
     model = args.model
+    experiment = args.experiment
     print("Probability of label corruption: " + str(p))
     print("Model: " + model)
     print("Dataset: " + dataset)
@@ -255,16 +303,23 @@ def main():
     dataLoader = DataLoader()
     if dataset == 'mnist':
         X, Y, X_test, Y_test = dataLoader.load_mnist()
-        Y_noisy = rand_corrupt(Y, p, 10)
+        num_classes = 10
     elif dataset == 'cifar10':
         X, Y, X_test, Y_test = dataLoader.load_cifar10()
-        Y_noisy = rand_corrupt(Y, p, 10)
+        num_classes = 10
     elif dataset == 'cifar100':
         X, Y, X_test, Y_test = dataLoader.load_cifar100()
-        Y_noisy = rand_corrupt(Y, p, 100)
-    elif dataset == 'mnist':
-        X, Y, X_test, Y_test = dataLoader.load_mnist()
-        Y_noisy = rand_corrupt(Y, p, 10)
+        num_classes = 100
+    else:
+        return
+
+    # Inject noisy labels according to experiment type
+    if experiment == 'rand_corrupt':
+        Y_noisy = rand_corrupt(Y, p, num_classes)
+    elif experiment == 'least_confusing':
+        Y_noisy = least_confusing(Y, p, dataset, num_classes)
+    elif experiment == 'most_confusing':
+        Y_noisy = most_confusing(Y, p, dataset, num_classes)
     else:
         return
 
