@@ -24,6 +24,10 @@ class DataLoader():
         Y = mnist.train.labels
         X_test = mnist.test.images
         Y_test = mnist.test.labels
+        
+        # Reshape images
+        X = np.reshape(X, [-1, 28, 28, 1])
+        X_test = np.reshape(X_test, [-1, 28, 28, 1])
         return X, Y, X_test, Y_test
 
     def load_cifar10(self):

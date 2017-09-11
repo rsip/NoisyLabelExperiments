@@ -75,8 +75,15 @@ def most_confusing(Y, p, dataset, num_classes):
 
     # Get 3 least confusable CM
     most_confusing = []
-    for row in cm:
-        most = np.argsort(-row)[:3]
+    for idx, row in enumerate(cm):
+        print ('current index :' + str(idx))
+        most = np.argsort(-row)[:4]
+        print(most)
+        if idx in most:
+            rm = np.argwhere(most == idx)
+            most = np.delete(most, rm)
+        else:
+            most = most[:3]
         print(most)
         most_confusing.append(most)
 
@@ -120,7 +127,10 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
         model.fit(X, Y, n_epoch=50, shuffle=True, validation_set=(X_test, Y_test), show_metric=True, batch_size=100, run_id='noisylabel')
 
     elif model_type == 'inception_v3':
-        network = input_data(shape=[None, 32, 32, 3])
+        if dataset == 'cifar10' or dataset == 'cifar100':
+            network = input_data(shape=[None, 32, 32, 3])
+        elif dataset == 'mnist':
+            network = input_data(shape=[None, 28, 28, 1])
         conv1_7_7 = conv_2d(network, 64, 7, strides=2, activation='relu', name = 'conv1_7_7_s2')
         pool1_3_3 = max_pool_2d(conv1_7_7, 3,strides=2)
         pool1_3_3 = local_response_normalization(pool1_3_3)
@@ -246,6 +256,10 @@ def run_network(X, Y, X_test, Y_test, p, model_type, dataset):
     # Output test accuracy
     accuracy = model.evaluate(X_test, Y_test)
     print("Test accuracy: " + str(accuracy))
+
+    # Write to file
+    with open('tmp/record.txt', 'a') as file:
+        file.write(str(p) + ": " + str(accuracy))
 
     # Compute confusion matrix
     # Y_test = np.argmax(Y_test, axis=1)
