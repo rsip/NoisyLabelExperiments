@@ -45,11 +45,16 @@ def least_confusing(Y, p, dataset, num_classes):
 
     # Get 3 least confusable CM
     least_confusing = []
-    for row in cm:
-        least = np.argsort(row)[:3]
-        print(least)
+    k = int(num_classes * 0.3)
+    for idx, row in enumerate(cm):
+        least = np.argsort(row)[:(k + 1)]
+        if idx in least:
+            rm = np.argwhere(least == idx)
+            least = np.delete(least, rm)
+        else:
+            least = least[:k]
         least_confusing.append(least)
-
+        
     # Inject noise
     for i in range(len(Y)):
         if (random.random() < p):
@@ -75,16 +80,14 @@ def most_confusing(Y, p, dataset, num_classes):
 
     # Get 3 least confusable CM
     most_confusing = []
+    k = int(num_classes * 0.3)
     for idx, row in enumerate(cm):
-        print ('current index :' + str(idx))
-        most = np.argsort(-row)[:4]
-        print(most)
+        most = np.argsort(-row)[:(k + 1)]
         if idx in most:
             rm = np.argwhere(most == idx)
             most = np.delete(most, rm)
         else:
-            most = most[:3]
-        print(most)
+            most = most[:k]
         most_confusing.append(most)
 
     # Inject noise
